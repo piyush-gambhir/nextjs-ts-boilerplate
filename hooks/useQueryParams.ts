@@ -1,53 +1,24 @@
-"use client";
-import { useRouter, usePathname, useSearchParams } from "next/navigation";
+'use client';
 
-interface QueryParams {
-  [key: string]: string | undefined;
-}
+import { useRouter, useSearchParams } from 'next/navigation';
 
-export const useQueryParams = () => {
-  const { replace } = useRouter();
-  const pathname = usePathname();
+type QueryParams = Record<string, string>;
+
+export const useQueryParams = (): [
+  QueryParams,
+  (newQueryParams: QueryParams) => void,
+] => {
   const searchParams = useSearchParams();
+  const router = useRouter();
 
-  const updateQueryParam = (key: string, value: string | undefined) => {
-    const params = new URLSearchParams(searchParams.toString());
+  // Convert searchParams to a plain object
+  const queryParams: QueryParams = Object.fromEntries(searchParams.entries());
 
-    if (value) {
-      params.set(key, value);
-    } else {
-      params.delete(key);
-    }
-    replace(`${pathname}?${params.toString()}`);
+  // Function to set query parameters
+  const setQueryParams = (newQueryParams: QueryParams) => {
+    const updatedSearchParams = new URLSearchParams(newQueryParams);
+    router.replace(`?${updatedSearchParams.toString()}`, { scroll: false });
   };
 
-  const updateQueryParams = (paramsToUpdate: QueryParams) => {
-    const params = new URLSearchParams(searchParams.toString());
-
-    Object.entries(paramsToUpdate).forEach(([key, value]) => {
-      if (value) {
-        params.set(key, value);
-      } else {
-        params.delete(key);
-      }
-    });
-
-    replace(`${pathname}?${params.toString()}`);
-  };
-
-  const getQueryParam = (key: string): string | null => {
-    const params = new URLSearchParams(searchParams.toString());
-    return params.get(key);
-  };
-
-  const removeAllQueryParams = () => {
-    replace(pathname);
-  };
-
-  return {
-    updateQueryParam,
-    updateQueryParams,
-    getQueryParam,
-    removeAllQueryParams,
-  };
+  return [queryParams, setQueryParams];
 };
